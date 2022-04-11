@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "domain": "fusion_solar",
+  "name": "FusionSolar",
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/fusion_solar",
+  "requirements": ["fusion_solar_py>=0.0.2"],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": ["@jgriss"],
+  "iot_class": "cloud_polling"
+}

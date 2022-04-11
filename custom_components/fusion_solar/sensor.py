@@ -87,7 +87,7 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
         self._attr_native_value = self._get_data()
 
         # initialize a last reset with midnight of today
-        self._last_value = None
+        self._last_value = self._attr_native_value
         current_date = datetime.datetime.now()
 
         self._last_reset = datetime.datetime(
@@ -121,6 +121,12 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
 
         # if the new value is lower than the previous one,
         # expect that there might have been a reset
+        _LOGGER.debug(
+            "Updating value. last_value = %s, new_value = %s",
+            str(self._last_value),
+            str(new_value),
+        )
+
         if new_value is not None and self._last_value is not None:
             if new_value < self._last_value:
                 self._last_reset = datetime.datetime.now()

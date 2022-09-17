@@ -6,12 +6,10 @@ import datetime
 import logging
 
 from homeassistant.components.sensor import (
-    DEVICE_CLASS_ENERGY,
-    DEVICE_CLASS_POWER,
-    STATE_CLASS_MEASUREMENT,
-    STATE_CLASS_TOTAL,
+    SensorStateClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorDeviceClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ENERGY_KILO_WATT_HOUR, POWER_KILO_WATT
@@ -49,25 +47,6 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-def last_reset_today() -> datetime:
-    """Function to set the last reset to the beginning of today
-
-    :return: The datetime of 00:00 of that day
-    :rtype: datetime
-    """
-    # get the current date
-    current_date = datetime.datetime.now()
-
-    # create the start of this day
-    return datetime.datetime(
-        year=current_date.year,
-        month=current_date.month,
-        day=current_date.day,
-        hour=0,
-        minute=0,
-    )
-
-
 @dataclass
 class FusionSolarEntityDescription(SensorEntityDescription):
     """Entity description of fusion solar entities"""
@@ -75,39 +54,6 @@ class FusionSolarEntityDescription(SensorEntityDescription):
     plant_type: str = None
     last_reset_fn: Callable = None
 
-
-SENSOR_TYPES = {
-    "total-current_power_kw": FusionSolarEntityDescription(
-        key="total-current_power_kw",
-        plant_type="total",
-        name="Total Power - Now",
-        icon="mdi:solar-panel",
-        entity_category="diagnostic",
-        native_unit_of_measurement=POWER_KILO_WATT,
-        device_class=DEVICE_CLASS_POWER,
-        state_class=STATE_CLASS_MEASUREMENT,
-    ),
-    "total-power_today_kwh": FusionSolarEntityDescription(
-        key="total-power_today_kwh",
-        plant_type="total",
-        name="Total Energy - Today",
-        icon="mdi:solar-panel",
-        entity_category="diagnostic",
-        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-        device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_TOTAL,
-        last_reset_fn=last_reset_today,
-    ),
-    "power_kwh": FusionSolarEntityDescription(
-        key="productPower",
-        plant_type="plant",
-        name="Power",
-        icon="mdi:solar-panel",
-        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-        device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_TOTAL,
-    ),
-}
 
 # URL to image: "https://eu5.fusionsolar.huawei.com/pvmswebsite/images/sm/login-logo.png"
 
@@ -140,6 +86,18 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
 
         self._attr_native_value = self._get_data()
 
+        # initialize a last reset with midnight of today
+        self._last_value = self._attr_native_value
+        current_date = datetime.datetime.now()
+
+        self._last_reset = datetime.datetime(
+            year=current_date.year,
+            month=current_date.month,
+            day=current_date.day,
+            hour=0,
+            minute=0,
+        )
+
     def _get_data(self) -> float:
         """Retrieve the current sensor value from the coordinator
 
@@ -159,19 +117,94 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._attr_native_value = self._get_data()
+        new_value = self._get_data()
+
+        # if the new value is lower than the previous one,
+        # expect that there might have been a reset
+        _LOGGER.debug(
+            "Updating value. last_value = %s, new_value = %s",
+            str(self._last_value),
+            str(new_value),
+        )
+
+        if new_value is not None and self._last_value is not None:
+            if new_value < self._last_value:
+                self._last_reset = datetime.datetime.now()
+
+        # this is used in order to only save proper readings
+        if new_value is not None:
+            self._last_value = new_value
+
+        self._attr_native_value = new_value
+
+        # tell HA that the value changed
         self.async_write_ha_state()
 
     @property
     def last_reset(self) -> datetime:
         """Last reset as defined by the last_reset_fn"""
         if self.entity_description.last_reset_fn:
-            return self.entity_description.last_reset_fn()
-        if self.entity_description.plant_type == "plant":
-            last_update_str = self.coordinator.data["plants"][self.plant_id][
-                self.entity_description.key
-            ]["time"]
-
-            return datetime.datetime.strptime(last_update_str, "%Y-%m-%d %H:%M")
+            return self.entity_description.last_reset_fn(self)
 
         return None
+
+
+def last_reset_data(sensor_object: FusionSolarSensor) -> datetime:
+    """Returns the last reset date based on the received data
+
+    :param sensor_object: The sensor object calling the function
+    :type sensor_object: FusionSolarSensor
+    :return: The last reset data
+    :rtype: datetime
+    """
+    last_update_str = sensor_object.coordinator.data["plants"][sensor_object.plant_id][
+        sensor_object.entity_description.key
+    ]["time"]
+
+    return datetime.datetime.strptime(last_update_str, "%Y-%m-%d %H:%M")
+
+
+def last_reset_self(sensor_object: FusionSolarSensor) -> datetime:
+    """Return the last_reset stored as part of the object
+
+    :param self: The FusionSolarObject calling the function
+    :type: sensobr_object: FusionSolarSensor
+    :return: The last_reset stored with the object
+    :rtype: datetime
+    """
+    return sensor_object._last_reset
+
+
+SENSOR_TYPES = {
+    "total-current_power_kw": FusionSolarEntityDescription(
+        key="total-current_power_kw",
+        plant_type="total",
+        name="Total Power - Now",
+        icon="mdi:solar-panel",
+        entity_category="diagnostic",
+        native_unit_of_measurement=POWER_KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    "total-power_today_kwh": FusionSolarEntityDescription(
+        key="total-power_today_kwh",
+        plant_type="total",
+        name="Total Energy - Today",
+        icon="mdi:solar-panel",
+        entity_category="diagnostic",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        last_reset_fn=last_reset_self,
+    ),
+    "power_kwh": FusionSolarEntityDescription(
+        key="productPower",
+        plant_type="plant",
+        name="Power",
+        icon="mdi:solar-panel",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.MEASUREMENT,
+        # last_reset_fn=last_reset_data,
+    ),
+}

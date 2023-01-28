@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ENERGY_KILO_WATT_HOUR, POWER_KILO_WATT
+from homeassistant.const import ENERGY_KILO_WATT_HOUR, POWER_KILO_WATT, PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, callback
@@ -42,6 +42,12 @@ async def async_setup_entry(
         for plant_id in coordinator.data["plants"].keys():
             entities.append(
                 FusionSolarSensor(coordinator, SENSOR_TYPES["power_kwh"], plant_id)
+            )
+            entities.append(
+                FusionSolarSensor(coordinator, SENSOR_TYPES["usage_kwh"], plant_id)
+            )
+            entities.append(
+                FusionSolarSensor(coordinator, SENSOR_TYPES["total_usage_kwh"], plant_id)
             )
 
     async_add_entities(entities)
@@ -204,6 +210,36 @@ SENSOR_TYPES = {
         icon="mdi:solar-panel",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.MEASUREMENT,
+        # last_reset_fn=last_reset_data,
+    ),
+    "usage_kwh": FusionSolarEntityDescription(
+        key="usePower",
+        plant_type="plant",
+        name="Power Usage",
+        icon="mdi:meter-electric",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.MEASUREMENT,
+        # last_reset_fn=last_reset_data,
+    ),
+    "total_usage_kwh": FusionSolarEntityDescription(
+        key="totalUsePower",
+        plant_type="plant",
+        name="Total Power Usage - Today",
+        icon="mdi:meter-electric",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        # last_reset_fn=last_reset_data,
+    ),
+    "relative_grid_usage": FusionSolarEntityDescription(
+        key="buyPowerRatio",
+        plant_type="plant",
+        name="Bought Power Ratio - Today",
+        icon="mdi:meter-electric",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
         # last_reset_fn=last_reset_data,
     ),

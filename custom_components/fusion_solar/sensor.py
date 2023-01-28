@@ -113,6 +113,10 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
         if self.entity_description.plant_type == "total":
             value_keys = self.entity_description.key.split("-")
             value = self.coordinator.data[value_keys[0]][value_keys[1]]
+        elif self.entity_description.plant_type == "plant_value":
+            value = self.coordinator.data["plants"][self.plant_id][
+                self.entity_description.key
+            ]
         else:
             value = self.coordinator.data["plants"][self.plant_id][
                 self.entity_description.key
@@ -225,7 +229,7 @@ SENSOR_TYPES = {
     ),
     "total_usage_kwh": FusionSolarEntityDescription(
         key="totalUsePower",
-        plant_type="plant",
+        plant_type="plant_value",
         name="Total Power Usage - Today",
         icon="mdi:meter-electric",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
@@ -235,7 +239,7 @@ SENSOR_TYPES = {
     ),
     "relative_grid_usage": FusionSolarEntityDescription(
         key="buyPowerRatio",
-        plant_type="plant",
+        plant_type="plant_value",
         name="Bought Power Ratio - Today",
         icon="mdi:meter-electric",
         native_unit_of_measurement=PERCENTAGE,

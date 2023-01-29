@@ -49,6 +49,9 @@ async def async_setup_entry(
             entities.append(
                 FusionSolarSensor(coordinator, SENSOR_TYPES["total_usage_kwh"], plant_id)
             )
+            entities.append(
+                FusionSolarSensor(coordinator, SENSOR_TYPES["relative_grid_usage"], plant_id)
+            )
 
     async_add_entities(entities)
 

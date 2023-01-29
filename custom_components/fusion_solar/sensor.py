@@ -25,6 +25,22 @@ from .update_coordinator import FusionSolarCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
+def _get_cache_path(hass: HomeAssistant, sensor_type: str, unique_id: str = "") -> str:
+    """Create the path for the cache file of the given sensor   
+
+    :param hass: The HomeAssistant object
+    :type hass: HomeAssistant
+    :param sensor_type: Sensor type as a string (used for the unique path)
+    :type sensor_type: str
+    :param unique_id: If set, this unique id is added (for multiple sensors of the same type)
+    :type unique_id: str, optional
+    :return: Path to the cache file
+    :rtype: str
+    """
+    cache_path = hass.config.path(DOMAIN + "_" + sensor_type + unique_id + "_cache.pkl")
+
+    return cache_path
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -34,25 +50,25 @@ async def async_setup_entry(
 
     if "total" in coordinator.data:
         entities.append(
-            FusionSolarSensor(coordinator, SENSOR_TYPES["total-current_power_kw"])
+            FusionSolarSensor(coordinator, SENSOR_TYPES["total-current_power_kw"], cache_path=_get_cache_path(hass, "total-current_power_kw"))
         )
         entities.append(
-            FusionSolarSensor(coordinator, SENSOR_TYPES["total-power_today_kwh"])
+            FusionSolarSensor(coordinator, SENSOR_TYPES["total-power_today_kwh"], cache_path=_get_cache_path(hass, "total-power_today_kwh"))
         )
 
     if "plants" in coordinator.data:
         for plant_id in coordinator.data["plants"].keys():
             entities.append(
-                FusionSolarSensor(coordinator, SENSOR_TYPES["power_kwh"], plant_id)
+                FusionSolarSensor(coordinator, SENSOR_TYPES["power_kwh"], plant_id, cache_path=_get_cache_path(hass, "power_kwh", plant_id))
             )
             entities.append(
-                FusionSolarSensor(coordinator, SENSOR_TYPES["usage_kwh"], plant_id)
+                FusionSolarSensor(coordinator, SENSOR_TYPES["usage_kwh"], plant_id, cache_path=_get_cache_path(hass, "usage_kwh", plant_id))
             )
             entities.append(
-                FusionSolarSensor(coordinator, SENSOR_TYPES["total_usage_kwh"], plant_id)
+                FusionSolarSensor(coordinator, SENSOR_TYPES["total_usage_kwh"], plant_id, cache_path=_get_cache_path(hass, "total_usage_kwh", plant_id))
             )
             entities.append(
-                FusionSolarSensor(coordinator, SENSOR_TYPES["relative_grid_usage"], plant_id)
+                FusionSolarSensor(coordinator, SENSOR_TYPES["relative_grid_usage"], plant_id, cache_path=_get_cache_path(hass, "relative_grid_usage", plant_id))
             )
 
     async_add_entities(entities)
@@ -79,6 +95,7 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
         coordinator: FusionSolarCoordinator,
         description: FusionSolarEntityDescription,
         plant_id: str = None,
+        cache_path: str = None
     ) -> None:
         """Initialize a new FusionSolarSensor
 
@@ -88,6 +105,8 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
         :type: FusionSolarEntityDescription
         :param plant_id: The plant's id. Only relevant for actual plants, defaults to None
         :type plant_id: str, optional
+        :param cache_path: Path to the cache file to use.
+        :type cache_path: str, optional
         """
         # pass the coordinator to the base class
         super().__init__(coordinator)
@@ -101,7 +120,7 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
         self._last_value = self._attr_native_value
         
         # load the cache
-        self._cache_file = self.hass.config.path(DOMAIN + "_" + plant_id + "_cache.pkl")
+        self._cache_file = cache_path
 
         if pathlib.Path(self._cache_file).exists():
             _LOGGER.debug(f"Loading cache from { self._cache_file }...")

@@ -24,7 +24,7 @@ class FusionSolarCoordinator(DataUpdateCoordinator):
             # Name of the data. For logging purposes.
             name="FusionSolarAPI",
             # Polling interval. Will only be polled if there are subscribers.
-            update_interval=timedelta(minutes=1),
+            update_interval=timedelta(minutes=4),
         )
         self.my_api = my_api
         self.plant_ids = None

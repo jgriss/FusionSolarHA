@@ -100,7 +100,7 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
             year=current_date.year,
             month=current_date.month,
             day=current_date.day,
-            hour=0,
+            hour=1,
             minute=0,
         )
 

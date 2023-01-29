@@ -4,6 +4,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import datetime
 import logging
+import pathlib
+import pickle
 
 from homeassistant.components.sensor import (
     SensorStateClass,
@@ -97,16 +99,39 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
 
         # initialize a last reset with midnight of today
         self._last_value = self._attr_native_value
-        current_date = datetime.datetime.now()
+        
+        # load the cache
+        self._cache_file = self.hass.config.path(DOMAIN + "_" + plant_id + "_cache.pkl")
 
-        self._last_reset = datetime.datetime(
-            year=current_date.year,
-            month=current_date.month,
-            day=current_date.day,
-            hour=1,
-            minute=0,
-        )
+        if pathlib.Path(self._cache_file).exists():
+            _LOGGER.debug(f"Loading cache from { self._cache_file }...")
+            with open(self._cache_file, "rb") as reader:
+                self._cache = pickle.load(reader)
+        else:
+            _LOGGER.debug("No cache available.")
+            self._cache = {}
 
+        # load last reset from cache
+        if "last_reset" in self._cache:
+            self._last_reset = self._cache["last_reset"]
+        else:
+            # if no last reset is known, use the 
+            current_date = datetime.datetime.now()
+
+            self._last_reset = datetime.datetime(
+                year=current_date.year,
+                month=current_date.month,
+                day=current_date.day,
+                hour=1,
+                minute=0,
+            )
+
+    def _save_cache(self) -> None:
+        """Save the current cache to file
+        """
+        with open(self._cache_file, "wb") as writer:
+            pickle.dump(self._cache, writer)
+    
     def _get_data(self) -> float:
         """Retrieve the current sensor value from the coordinator
 
@@ -140,9 +165,15 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
             str(new_value),
         )
 
+        # update last reset if the new value is lower than before
         if new_value is not None and self._last_value is not None:
             if new_value < self._last_value:
                 self._last_reset = datetime.datetime.now()
+                _LOGGER.debug(f"New last reset: { self._last_reset }")
+
+                # update the cache
+                self._cache["last_reset"] = self._last_reset
+                self._save_cache()
 
         # this is used in order to only save proper readings
         if new_value is not None:

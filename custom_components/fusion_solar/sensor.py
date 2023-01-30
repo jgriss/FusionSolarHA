@@ -171,6 +171,25 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
 
         return value
 
+    def _update_last_reset(self, new_value: float) -> None:
+        """Test whether the last reset time needs to be updated
+
+        :param new_value: The new value passed by the update function
+        :type new_value: float
+        """
+        # ignore any invalid readings
+        if new_value is None or self._last_value is None:
+            return
+
+        # total counters can only increase
+        if new_value < self._last_value:
+            self._last_reset = datetime.datetime.now()
+            _LOGGER.debug(f"New last reset for { self.entity_description.name }: { self._last_reset }")
+
+            # update the cache
+            self._cache["last_reset"] = self._last_reset
+            self._save_cache()
+
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
@@ -179,26 +198,21 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
         # if the new value is lower than the previous one,
         # expect that there might have been a reset
         _LOGGER.debug(
-            "Updating value. last_value = %s, new_value = %s",
+            "Updating value for %s: %s -> %s",
+            str(self.entity_description.name),
             str(self._last_value),
             str(new_value),
         )
 
-        # update last reset if the new value is lower than before
-        if new_value is not None and self._last_value is not None:
-            if new_value < self._last_value:
-                self._last_reset = datetime.datetime.now()
-                _LOGGER.debug(f"New last reset: { self._last_reset }")
+        # update the last reset - if necessary
+        if self.entity_description.last_reset_fn:
+            self._update_last_reset(new_value)
 
-                # update the cache
-                self._cache["last_reset"] = self._last_reset
-                self._save_cache()
+        self._attr_native_value = new_value
 
         # this is used in order to only save proper readings
         if new_value is not None:
             self._last_value = new_value
-
-        self._attr_native_value = new_value
 
         # tell HA that the value changed
         self.async_write_ha_state()
@@ -268,7 +282,6 @@ SENSOR_TYPES = {
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.MEASUREMENT,
-        # last_reset_fn=last_reset_data,
     ),
     "usage_kwh": FusionSolarEntityDescription(
         key="usePower",
@@ -278,7 +291,6 @@ SENSOR_TYPES = {
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.MEASUREMENT,
-        # last_reset_fn=last_reset_data,
     ),
     "total_usage_kwh": FusionSolarEntityDescription(
         key="totalUsePower",
@@ -288,7 +300,7 @@ SENSOR_TYPES = {
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
-        # last_reset_fn=last_reset_data,
+        last_reset_fn=last_reset_self,
     ),
     "relative_grid_usage": FusionSolarEntityDescription(
         key="buyPowerRatio",
@@ -298,6 +310,5 @@ SENSOR_TYPES = {
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
-        # last_reset_fn=last_reset_data,
     ),
 }

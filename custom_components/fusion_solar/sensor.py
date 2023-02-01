@@ -182,7 +182,9 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
             return
 
         # total counters can only increase
-        if new_value < self._last_value:
+        # Note: Due to a bug, the values sometimes only decrease by f.e. 1 kWh
+        #       a reset should normally always go close to 0 (< 1 for sure)
+        if new_value < self._last_value and new_value < 1.5:
             self._last_reset = datetime.datetime.now()
             _LOGGER.debug(f"New last reset for { self.entity_description.name }: { self._last_reset }")
 

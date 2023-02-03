@@ -70,6 +70,15 @@ async def async_setup_entry(
             entities.append(
                 FusionSolarSensor(coordinator, SENSOR_TYPES["relative_grid_usage"], plant_id, cache_path=_get_cache_path(hass, "relative_grid_usage", plant_id))
             )
+            entities.append(
+                FusionSolarSensor(coordinator, SENSOR_TYPES["total_grid_power"], plant_id, cache_path=_get_cache_path(hass, "total_grid_power", plant_id))
+            )
+            entities.append(
+                FusionSolarSensor(coordinator, SENSOR_TYPES["total_used_solar_power"], plant_id, cache_path=_get_cache_path(hass, "total_used_solar_power", plant_id))
+            )
+            entities.append(
+                FusionSolarSensor(coordinator, SENSOR_TYPES["total_grid_return"], plant_id, cache_path=_get_cache_path(hass, "total_grid_return", plant_id))
+            )
 
     async_add_entities(entities)
 
@@ -321,5 +330,35 @@ SENSOR_TYPES = {
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
+    ),
+    "total_grid_power": FusionSolarEntityDescription(
+        key="totalBuyPower",
+        plant_type="plant_value",
+        name="Total Bought Power - Today",
+        icon="mdi:meter-electric",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        last_reset_fn=last_reset_self,
+    ),
+    "total_used_solar_power": FusionSolarEntityDescription(
+        key="totalSelfUsePower",
+        plant_type="plant_value",
+        name="Total Used Solar Power - Today",
+        icon="mdi:meter-electric",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        last_reset_fn=last_reset_self,
+    ),
+    "total_grid_return": FusionSolarEntityDescription(
+        key="grid_return",
+        plant_type="plant_value",
+        name="Total Used Solar Power - Today",
+        icon="mdi:meter-electric",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        last_reset_fn=last_reset_self,
     ),
 }

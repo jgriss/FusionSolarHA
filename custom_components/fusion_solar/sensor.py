@@ -354,7 +354,7 @@ SENSOR_TYPES = {
     "total_grid_return": FusionSolarEntityDescription(
         key="grid_return",
         plant_type="plant_value",
-        name="Total Used Solar Power - Today",
+        name="Total Returned Power - Today",
         icon="mdi:meter-electric",
         native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,

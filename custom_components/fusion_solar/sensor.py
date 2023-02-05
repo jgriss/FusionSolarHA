@@ -352,7 +352,7 @@ SENSOR_TYPES = {
         last_reset_fn=last_reset_self,
     ),
     "total_grid_return": FusionSolarEntityDescription(
-        key="grid_return",
+        key="totalOnGridPower",
         plant_type="plant_value",
         name="Total Returned Power - Today",
         icon="mdi:meter-electric",

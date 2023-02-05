@@ -69,12 +69,6 @@ class FusionSolarCoordinator(DataUpdateCoordinator):
 
                     plant_data = self.my_api.get_last_plant_data(plant_status)
 
-                    # add the grid return
-                    if plant_data["totalSelfUsePower"] is not None and power_status.total_power_today_kwh is not None:
-                        plant_data["grid_return"] = power_status.total_power_today_kwh - plant_data["totalSelfUsePower"]
-                    else:
-                        plant_data["grid_return"] = None
-
                     # save the power data
                     data["plants"][plant_id] = plant_data
 

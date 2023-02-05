@@ -71,6 +71,9 @@ async def async_setup_entry(
                 FusionSolarSensor(coordinator, SENSOR_TYPES["relative_grid_usage"], plant_id, cache_path=_get_cache_path(hass, "relative_grid_usage", plant_id))
             )
             entities.append(
+                FusionSolarSensor(coordinator, SENSOR_TYPES["relative_pv_usage"], plant_id, cache_path=_get_cache_path(hass, "relative_grid_usage", plant_id))
+            )
+            entities.append(
                 FusionSolarSensor(coordinator, SENSOR_TYPES["total_grid_power"], plant_id, cache_path=_get_cache_path(hass, "total_grid_power", plant_id))
             )
             entities.append(
@@ -79,6 +82,13 @@ async def async_setup_entry(
             entities.append(
                 FusionSolarSensor(coordinator, SENSOR_TYPES["total_grid_return"], plant_id, cache_path=_get_cache_path(hass, "total_grid_return", plant_id))
             )
+            entities.append(
+                FusionSolarSensor(coordinator, SENSOR_TYPES["grid_return"], plant_id, cache_path=_get_cache_path(hass, "grid_return", plant_id))
+            )
+            entities.append(
+                FusionSolarSensor(coordinator, SENSOR_TYPES["grid_usage"], plant_id, cache_path=_get_cache_path(hass, "grid_usage", plant_id))
+            )
+
 
     async_add_entities(entities)
 
@@ -331,6 +341,15 @@ SENSOR_TYPES = {
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
     ),
+    "relative_pv_usage": FusionSolarEntityDescription(
+        key="selfUsePowerRatioByProduct",
+        plant_type="plant_value",
+        name="Used PV Power Ratio - Today",
+        icon="mdi:meter-electric",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
     "total_grid_power": FusionSolarEntityDescription(
         key="totalBuyPower",
         plant_type="plant_value",
@@ -360,5 +379,23 @@ SENSOR_TYPES = {
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL,
         last_reset_fn=last_reset_self,
+    ),
+    "grid_return": FusionSolarEntityDescription(
+        key="onGridPower",
+        plant_type="plant",
+        name="Grid Return",
+        icon="mdi:meter-electric",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    "grid_usage": FusionSolarEntityDescription(
+        key="disGridPower",
+        plant_type="plant",
+        name="Grid Usage",
+        icon="mdi:meter-electric",
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.MEASUREMENT,
     ),
 }

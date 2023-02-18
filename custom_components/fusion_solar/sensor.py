@@ -225,13 +225,13 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
             str(new_value),
         )
 
-        # for the total usage, a bug causes a decrease in usage
+        # for the total counters, a bug causes a decrease in usage
         # sometimes during the reset period, these values
         # must be ignored
-        if self.entity_description.name == "Total Power Usage - Today":
+        if self.entity_description.state_class == SensorStateClass.TOTAL:
             # invalid updates show a decrease to a still high number
-            if new_value < self._last_value and new_value > 2:
-                _LOGGER.debug("Ignoring invalid update for Total Power Usage - Today")
+            if new_value < self._last_value and new_value > 3:
+                _LOGGER.debug(f"Ignoring invalid update for {self.entity_description.name}")
                 return
 
         # update the last reset - if necessary

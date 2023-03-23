@@ -28,6 +28,17 @@ class FusionSolarCoordinator(DataUpdateCoordinator):
         )
         self.my_api = my_api
         self.plant_ids = None
+        self._update_failure_counter = 0
+
+    def _reset_client(self) -> None:
+        """Resets the FusionSolarClient
+        """
+        new_client = FusionSolarClient(self.my_api._user, self.my_api._password)
+
+        # remove the current one
+        self.my_api.log_out()
+
+        self.my_api = new_client
 
     async def _async_update_data(self):
         """Fetch data from API endpoint.
@@ -72,10 +83,23 @@ class FusionSolarCoordinator(DataUpdateCoordinator):
                     # save the power data
                     data["plants"][plant_id] = plant_data
 
+                # reset the counter if the update worked
+                self._update_failure_counter = 0
+
                 return data
         except AuthenticationException as err:
             # Raising ConfigEntryAuthFailed will cancel future updates
             # and start a config flow with SOURCE_REAUTH (async_step_reauth)
             raise ConfigEntryAuthFailed from err
         except FusionSolarException as err:
+            _LOGGER.error(f"Error communicating with API: {err}")
+            _LOGGER.exception(err)
+
+            self._update_failure_counter += 1
+
+            # reset the fusion solar client after 2 attempts
+            if self._update_failure_counter >= 2:
+                _LOGGER.info("Reached 2 failures. Resetting fusion_solar client")
+                self._reset_client()
+
             raise UpdateFailed(f"Error communicating with API: {err}") from err

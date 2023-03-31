@@ -228,7 +228,7 @@ class FusionSolarSensor(CoordinatorEntity, SensorEntity):
         # for the total counters, a bug causes a decrease in usage
         # sometimes during the reset period, these values
         # must be ignored
-        if self.entity_description.state_class == SensorStateClass.TOTAL:
+        if self.entity_description.state_class == SensorStateClass.TOTAL and new_value is not None:
             # invalid updates show a decrease to a still high number
             if new_value < self._last_value and new_value > 3:
                 _LOGGER.debug(f"Ignoring invalid update for {self.entity_description.name}")

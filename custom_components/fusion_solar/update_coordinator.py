@@ -91,7 +91,7 @@ class FusionSolarCoordinator(DataUpdateCoordinator):
             # Raising ConfigEntryAuthFailed will cancel future updates
             # and start a config flow with SOURCE_REAUTH (async_step_reauth)
             raise ConfigEntryAuthFailed from err
-        except FusionSolarException as err:
+        except Exception as err:
             _LOGGER.error(f"Error communicating with API: {err}")
             _LOGGER.exception(err)
 

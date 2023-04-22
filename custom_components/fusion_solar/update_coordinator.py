@@ -100,6 +100,6 @@ class FusionSolarCoordinator(DataUpdateCoordinator):
             # reset the fusion solar client after 2 attempts
             if self._update_failure_counter >= 2:
                 _LOGGER.info("Reached 2 failures. Resetting fusion_solar client")
-                self._reset_client()
+                await self.hass.async_add_executor_job(self._reset_client)
 
             raise UpdateFailed(f"Error communicating with API: {err}") from err

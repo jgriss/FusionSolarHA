@@ -78,6 +78,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for FusionSolar."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     async def _async_do_task(self, task):
         await task  # A task that take some time to complete.

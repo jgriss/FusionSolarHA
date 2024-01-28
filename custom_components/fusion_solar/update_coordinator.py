@@ -67,7 +67,7 @@ class FusionSolarCoordinator(DataUpdateCoordinator):
                 data = {
                     "total": {
                         "current_power_kw": power_status.current_power_kw,
-                        "power_today_kwh": power_status.total_power_today_kwh,
+                        "power_today_kwh": power_status.energy_today_kwh,
                     },
                     "plants": {},
                 }

@@ -31,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # TODO: catch connection exceptions
     try:
         fusion_client = await hass.async_add_executor_job(
-            FusionSolarClient, entry.data["username"], entry.data["password"]
+            FusionSolarClient, entry.data["username"], entry.data["password"], huawei_subdomain=entry.data["subdomain"]
         )
     except AuthenticationException as error:
         raise ConfigEntryAuthFailed from error

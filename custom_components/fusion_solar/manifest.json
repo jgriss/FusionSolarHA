@@ -4,7 +4,7 @@
   "name": "FusionSolar",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/fusion_solar",
-  "requirements": ["fusion_solar_py==0.0.14"],
+  "requirements": ["fusion_solar_py"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},

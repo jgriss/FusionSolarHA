@@ -63,7 +63,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     try:
         # only creating the client already attempts a login
         await hass.async_add_executor_job(
-            FusionSolarClient, data["username"], data["password"], huawei_subdomain=data["subdomain"]
+            FusionSolarClient, data["username"], data["password"], data["subdomain"]
         )
     except AuthenticationException as error:
         raise InvalidAuth from error

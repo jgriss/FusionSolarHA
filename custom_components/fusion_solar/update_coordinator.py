@@ -33,7 +33,7 @@ class FusionSolarCoordinator(DataUpdateCoordinator):
     def _reset_client(self) -> None:
         """Resets the FusionSolarClient
         """
-        new_client = FusionSolarClient(self.my_api._user, self.my_api._password)
+        new_client = FusionSolarClient(self.my_api._user, self.my_api._password, huawei_subdomain=self.my_api._huawei_subdomain)
 
         # remove the current one
         self.my_api.log_out()
@@ -67,7 +67,7 @@ class FusionSolarCoordinator(DataUpdateCoordinator):
                 data = {
                     "total": {
                         "current_power_kw": power_status.current_power_kw,
-                        "power_today_kwh": power_status.total_power_today_kwh,
+                        "power_today_kwh": power_status.energy_today_kwh,
                     },
                     "plants": {},
                 }

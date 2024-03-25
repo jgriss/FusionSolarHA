@@ -41,6 +41,7 @@ class FusionSolar:
                 self.client.log_out()
 
             self.client = FusionSolarClient(username, password, huawei_subdomain)
+
         except AuthenticationException as error:
             _LOGGER.warning(
                 "Wrong username or password for the FusionSolar API: %s", str(error)
@@ -78,6 +79,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for FusionSolar."""
 
     VERSION = 1
+    MINOR_VERSION = 2
 
     async def _async_do_task(self, task):
         await task  # A task that take some time to complete.

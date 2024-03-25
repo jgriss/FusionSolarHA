@@ -21,7 +21,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required("username"): str,
         vol.Required("password"): str,
-        vol.Required("subdomain"): str
+        vol.Optional("huawei_subdomain", default="region03eu5"): str
     }
 )
 
@@ -33,14 +33,15 @@ class FusionSolar:
         """Initialize."""
         self.client = None
 
-    async def authenticate(self, username: str, password: str, subdomain: str) -> bool:
+    async def authenticate(self, username: str, password: str, huawei_subdomain: str) -> bool:
         """Test if we can authenticate with the host."""
 
         try:
             if self.client:
                 self.client.log_out()
 
-            self.client = FusionSolarClient(username, password, huawei_subdomain=subdomain)
+            self.client = FusionSolarClient(username, password, huawei_subdomain)
+
         except AuthenticationException as error:
             _LOGGER.warning(
                 "Wrong username or password for the FusionSolar API: %s", str(error)
@@ -63,7 +64,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     try:
         # only creating the client already attempts a login
         await hass.async_add_executor_job(
-            FusionSolarClient, data["username"], data["password"], data["subdomain"]
+            FusionSolarClient, data["username"], data["password"], data["huawei_subdomain"]
         )
     except AuthenticationException as error:
         raise InvalidAuth from error
